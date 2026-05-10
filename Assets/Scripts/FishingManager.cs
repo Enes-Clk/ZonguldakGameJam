@@ -1,83 +1,107 @@
 using UnityEngine;
+using TMPro;
 
 public class FishingManager : MonoBehaviour
 {
+    public static FishingManager Instance;
+
     [Header("Referanslar")]
     public Transform ropeOrigin;
     public Transform hookTransform;
-    public LineRenderer lineRenderer;
     public HookController hookController;
 
-    [Header("Animasyon Ayarları")]
-    public float returnSpeed = 15f; // İpin geri sarılma hızı (Inspector'dan ayarlanabilir)
+    [Header("Arayüz (UI) Yazıları")]
+    public TextMeshProUGUI moneyText;
+    public TextMeshProUGUI speedButtonText;    // Hız butonu yazısı
+    public TextMeshProUGUI damageButtonText;   // Hasar butonu yazısı
+    public TextMeshProUGUI distanceButtonText; // Derinlik/Mesafe butonu yazısı[Header("Ekonomi ve Geliştirmeler")]
+    public int money = 0;
+    public int speedLevel = 1;
+    public int damageLevel = 1;
+    public int distanceLevel = 1;
+    public int maxLevel = 10;
+
+    [Header("Temel Değerler (1. Seviye)")]
+    public float baseSpeed = 5f;
+    public float baseDamage = 50f;
+    public float baseDepth = -10f; [Header("Artış Miktarları (Her Seviyede)")]
+    public float speedIncrease = 1.5f;
+    public float damageIncrease = 25f;
+    public float depthIncrease = -5f; [Header("Fiyat Ayarları")]
+    public int baseUpgradeCost = 100;
 
     private bool isFishingMode = false;
-    private bool isReturning = false; // Kancanın geri dönme durumunu takip eder
+
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+    }
 
     void Start()
     {
-        lineRenderer.positionCount = 2;
-        lineRenderer.enabled = false;
+        UpdateAllUI(); // Oyun başında tüm yazıları güncelle
     }
 
     void Update()
     {
-        // E tuşuna basıldığında VE kanca halihazırda geri dönmüyorsa çalışır
-        // (Böylece kanca dönerken oyuncu spamlarsa bug oluşmaz)
-        if (Input.GetKeyDown(KeyCode.E) && !isReturning)
-        {
-            ToggleFishingMode();
-        }
-
-        // 1. Durum: Normal balık tutma
-        if (isFishingMode)
-        {
-            DrawRope();
-        }
-        // 2. Durum: İp geri sarılıyor (Animasyon evresi)
-        else if (isReturning)
-        {
-            // Kancayı kendi pozisyonundan, gemideki başlangıç noktasına doğru returnSpeed hızıyla çek
-            hookTransform.position = Vector3.MoveTowards(hookTransform.position, ropeOrigin.position, returnSpeed * Time.deltaTime);
-            DrawRope(); // Dönerken ipin çizilmeye devam etmesi gerekir
-
-            // Kanca gemiye ulaştıysa (aralarındaki mesafe çok çok kısaldıysa) işlemi bitir
-            if (Vector3.Distance(hookTransform.position, ropeOrigin.position) < 0.05f)
-            {
-                hookTransform.position = ropeOrigin.position; // Tam yerine oturt
-                isReturning = false;                          // Dönüş bitti
-                lineRenderer.enabled = false;                 // İpi gizle
-
-                Debug.Log("Kanca gemiye döndü. Gemi tekrar hareket edebilir.");
-                // TODO: Gemi hareket scriptini burada aktif edebilirsin
-            }
-        }
+        if (Input.GetKeyDown(KeyCode.E)) ToggleFishingMode();
     }
 
     void ToggleFishingMode()
     {
         isFishingMode = !isFishingMode;
-
-        if (isFishingMode)
-        {
-            Debug.Log("Balık tutma modu AKTİF.");
-            hookTransform.position = ropeOrigin.position; // Atış başlangıç noktası
-            hookController.SetFishingMode(true);          // WASD kontrolünü ver
-            lineRenderer.enabled = true;                  // İpi göster
-
-            // TODO: Gemi hareket scriptini burada devre dışı bırak
-        }
-        else
-        {
-            Debug.Log("Kanca geri toplanıyor...");
-            hookController.SetFishingMode(false); // WASD kontrolünü anında kes! (Yoksa dönerken oyuncu direnebilir)
-            isReturning = true;                   // Geri dönüş animasyonunu başlat
-        }
+        hookController.SetFishingMode(isFishingMode);
+        if (!isFishingMode) hookTransform.position = ropeOrigin.position;
     }
 
-    void DrawRope()
+    // --- UPGRADE SİSTEMİ MATEMATİĞİ ---
+    public float GetCurrentSpeed() => baseSpeed + (speedLevel - 1) * speedIncrease;
+    public float GetCurrentDamage() => baseDamage + (damageLevel - 1) * damageIncrease;
+    public float GetCurrentMaxDepth() => baseDepth + (distanceLevel - 1) * depthIncrease;
+    public int GetCost(int level) => baseUpgradeCost * level;
+
+    // --- UI (ARAYÜZ) GÜNCELLEMELERİ ---
+    public void UpdateAllUI()
     {
-        lineRenderer.SetPosition(0, ropeOrigin.position);
-        lineRenderer.SetPosition(1, hookTransform.position);
+        if (moneyText != null)
+            moneyText.text = "Para: " + money + "$";
+
+        if (speedButtonText != null)
+            speedButtonText.text = speedLevel >= maxLevel ? "Hız MAX" : $"Hız (Lv.{speedLevel})\nFiyat: {GetCost(speedLevel)}$";
+
+        if (damageButtonText != null)
+            damageButtonText.text = damageLevel >= maxLevel ? "Hasar MAX" : $"Hasar (Lv.{damageLevel})\nFiyat: {GetCost(damageLevel)}$";
+
+        if (distanceButtonText != null)
+            distanceButtonText.text = distanceLevel >= maxLevel ? "Derinlik MAX" : $"Derinlik (Lv.{distanceLevel})\nFiyat: {GetCost(distanceLevel)}$";
+    }
+
+    // --- SATIN ALMA FONKSİYONLARI ---
+    public void BuySpeedUpgrade()
+    {
+        if (speedLevel >= maxLevel) return;
+        int cost = GetCost(speedLevel);
+        if (money >= cost) { money -= cost; speedLevel++; UpdateAllUI(); }
+    }
+
+    public void BuyDamageUpgrade()
+    {
+        if (damageLevel >= maxLevel) return;
+        int cost = GetCost(damageLevel);
+        if (money >= cost) { money -= cost; damageLevel++; UpdateAllUI(); }
+    }
+
+    public void BuyDistanceUpgrade()
+    {
+        if (distanceLevel >= maxLevel) return;
+        int cost = GetCost(distanceLevel);
+        if (money >= cost) { money -= cost; distanceLevel++; UpdateAllUI(); }
+    }
+
+    public void AddMoney(int amount)
+    {
+        money += amount;
+        UpdateAllUI();
     }
 }

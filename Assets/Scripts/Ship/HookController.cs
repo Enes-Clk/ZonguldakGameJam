@@ -2,34 +2,35 @@ using UnityEngine;
 
 public class HookController : MonoBehaviour
 {
-    [Header("Kanca Kontrol Ayarları")]
-    public float moveSpeed = 5f;
-    public float damagePerSecond = 50f;
-
-    [Header("Başlangıç Fırlatma Gücü (AddForce Simülasyonu)")]
-    public float initialThrowForce = 15f; // Suya ilk girdiğinde aşağı çeken ani güç
-    public float forceDecaySpeed = 10f;   // Bu gücün ne kadar sürede sönümlenip biteceği
+    [Header("Dönüş ve Görsel Ayarları")]
+    public float turnSpeedDegrees = 360f;
+    public float spriteRotationOffset = -90f;
 
     [Header("Ekran Sınırları")]
     public Vector2 minBounds = new Vector2(-15, -10);
-    public Vector2 maxBounds = new Vector2(15, 5);
+    public Vector2 maxBounds = new Vector2(15, 5); [Header("İp (Çizim) Ayarları")]
+    public LineRenderer lineRenderer;
 
     private bool isFishing = false;
-    private float currentDownwardForce = 0f; // Arkada hesaplanan anlık ivme
+    private Vector3 currentDirection;
 
     public void SetFishingMode(bool state)
     {
         isFishing = state;
 
+        if (lineRenderer != null)
+        {
+            lineRenderer.enabled = state;
+            if (state)
+            {
+                // DÜZELTME: Sonsuz nokta eklemek yerine her zaman 2 noktalı gergin ip oluşturulur.
+                lineRenderer.positionCount = 2;
+            }
+        }
+
         if (isFishing)
         {
-            // Balık tutma BAŞLADIĞI ANDA kancaya aşağı yönlü devasa bir ivme ver
-            currentDownwardForce = initialThrowForce;
-        }
-        else
-        {
-            // Mod kapanırsa gücü sıfırla ki bir dahaki sefere temiz başlasın
-            currentDownwardForce = 0f;
+            currentDirection = Vector3.down;
         }
     }
 
@@ -37,44 +38,58 @@ public class HookController : MonoBehaviour
     {
         if (!isFishing) return;
 
-        // 1. ADIM: İVMEYİ SÖNÜMLENDİR (AddForce Hissi)
-        // Eğer kancada hala bir fırlatma gücü varsa, onu zamanla eritip sıfırla
-        if (currentDownwardForce > 0)
-        {
-            currentDownwardForce -= forceDecaySpeed * Time.deltaTime;
+        // Değerleri menajerden çek
+        float currentSpeed = FishingManager.Instance.GetCurrentSpeed();
+        minBounds.y = FishingManager.Instance.GetCurrentMaxDepth();
 
-            // Eğer eksiye düşerse tam sıfırda sabitle (Böylece yerçekimi tamamen biter)
-            if (currentDownwardForce < 0)
-            {
-                currentDownwardForce = 0f;
-            }
+        // DÜZELTME: Kanca, ipin başladığı tekneden (veya oltanın ucundan) daha yukarı uçamaz.
+        if (FishingManager.Instance.ropeOrigin != null)
+        {
+            maxBounds.y = FishingManager.Instance.ropeOrigin.position.y;
         }
 
-        // 2. ADIM: OYUNCU KONTROLÜ
-        float moveX = Input.GetAxis("Horizontal");
-        float moveY = Input.GetAxis("Vertical");
+        float moveX = Input.GetAxisRaw("Horizontal");
+        float moveY = Input.GetAxisRaw("Vertical");
+        Vector3 inputDirection = new Vector3(moveX, moveY, 0).normalized;
 
-        // Y eksenindeki hız = Oyuncunun WASD gücü EKSİ anlık kalan düşme ivmesi
-        float currentSpeedY = (moveY * moveSpeed) - currentDownwardForce;
-        float currentSpeedX = (moveX * moveSpeed);
+        if (inputDirection != Vector3.zero)
+        {
+            float targetAngle = Mathf.Atan2(inputDirection.y, inputDirection.x) * Mathf.Rad2Deg;
+            float currentAngle = Mathf.Atan2(currentDirection.y, currentDirection.x) * Mathf.Rad2Deg;
+            float nextAngle = Mathf.MoveTowardsAngle(currentAngle, targetAngle, turnSpeedDegrees * Time.deltaTime);
+            currentDirection = new Vector3(Mathf.Cos(nextAngle * Mathf.Deg2Rad), Mathf.Sin(nextAngle * Mathf.Deg2Rad), 0);
+        }
 
-        // 3. ADIM: HAREKETİ UYGULA VE SINIRLA
-        Vector3 newPos = transform.position + new Vector3(currentSpeedX, currentSpeedY, 0) * Time.deltaTime;
-
+        Vector3 newPos = transform.position + currentDirection * currentSpeed * Time.deltaTime;
         newPos.x = Mathf.Clamp(newPos.x, minBounds.x, maxBounds.x);
         newPos.y = Mathf.Clamp(newPos.y, minBounds.y, maxBounds.y);
-
         transform.position = newPos;
+
+        if (currentDirection != Vector3.zero)
+        {
+            float visualAngle = Mathf.Atan2(currentDirection.y, currentDirection.x) * Mathf.Rad2Deg;
+            transform.rotation = Quaternion.Euler(0, 0, visualAngle + spriteRotationOffset);
+        }
+
+        UpdateFishingLine();
+    }
+
+    private void UpdateFishingLine()
+    {
+        // DÜZELTME: İp gergin ve optimizasyonlu çizilir, frame droplar (kasmalar) engellenir.
+        if (lineRenderer == null || !isFishing) return;
+
+        lineRenderer.SetPosition(0, FishingManager.Instance.ropeOrigin.position);
+        lineRenderer.SetPosition(1, transform.position);
     }
 
     void OnTriggerStay2D(Collider2D other)
     {
         if (!isFishing) return;
-
         Fish hitFish = other.GetComponent<Fish>();
         if (hitFish != null)
         {
-            hitFish.TakeDamage(damagePerSecond * Time.deltaTime);
+            hitFish.TakeDamage(FishingManager.Instance.GetCurrentDamage() * Time.deltaTime);
         }
     }
 }
