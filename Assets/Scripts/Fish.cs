@@ -8,36 +8,72 @@ public class Fish : MonoBehaviour
     public int fishValue = 15;
     public float sizeMultiplier = 1f;
 
+    // Kameranın dışına çıkınca silinmesi için sınır değeri
+    public float leftScreenBound = -25f;
+
     private bool isCaught = false;
+
+    private SpriteRenderer spriteRenderer;
+    private Color originalColor;
+
+    // Hasar yediğinde rengin kırmızı kalma süresi
+    private float flashTimer = 0f;
 
     void Start()
     {
-        // Inspector'dan girilen boyutu uygula
         transform.localScale = Vector3.one * sizeMultiplier;
+
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null)
+        {
+            originalColor = spriteRenderer.color;
+        }
     }
 
     void Update()
     {
-        // Balık yakalanmadıysa sürekli sola doğru yüzsün (Jam taktiği: Basit Translate)
+        // DÜZELTME: Invoke yerine Timer kullanılarak aşırı yüklenme (kasma) sorunu kökünden çözüldü.
+        if (flashTimer > 0)
+        {
+            flashTimer -= Time.deltaTime;
+            if (flashTimer <= 0 && spriteRenderer != null)
+            {
+                spriteRenderer.color = originalColor; // Süre bitince orijinal renge dön
+            }
+        }
+
         if (!isCaught)
         {
             transform.Translate(Vector3.left * speed * Time.deltaTime);
+
+            if (transform.position.x < leftScreenBound)
+            {
+                Destroy(gameObject);
+            }
         }
     }
 
-    // Bu fonksiyonu HookController çağıracak
     public void TakeDamage(float damage)
     {
-        if (isCaught) return; // Zaten yakalandıysa hasar alma
+        if (isCaught) return;
 
         health -= damage;
 
-        // Görsel geri bildirim için balığı anlık kızartabilir veya titretebilirsin (Jam'de çok iş yapar!)
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = Color.red;
+            flashTimer = 0.1f; // 0.1 saniye boyunca kırmızı kalsın
+        }
 
         if (health <= 0)
         {
             isCaught = true;
-            InventoryManager.AddFish(fishValue);
+
+            if (FishingManager.Instance != null)
+            {
+                FishingManager.Instance.AddMoney(fishValue);
+            }
+
             Destroy(gameObject);
         }
     }
