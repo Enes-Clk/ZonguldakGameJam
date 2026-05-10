@@ -8,6 +8,10 @@ public class Fish : MonoBehaviour
     public int fishValue = 15;
     public float sizeMultiplier = 1f;
 
+    [Header("Görsel Sıralama")]
+    public string sortingLayerName = "Fish";
+    public int sortingOrder = 10;
+
     // Kameranın dışına çıkınca silinmesi için sınır değeri
     public float leftScreenBound = -25f;
 
@@ -26,6 +30,8 @@ public class Fish : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         if (spriteRenderer != null)
         {
+            spriteRenderer.sortingLayerName = sortingLayerName;
+            spriteRenderer.sortingOrder = sortingOrder;
             originalColor = spriteRenderer.color;
         }
     }
