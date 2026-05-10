@@ -5,9 +5,7 @@ public class PlayerShipController : MonoBehaviour
     public enum PlayerState { Walking, Steering, Fishing }
 
     [Header("State")]
-    public PlayerState currentState = PlayerState.Walking;
-
-    [Header("Player")]
+    public PlayerState currentState = PlayerState.Walking; [Header("Player")]
     public Rigidbody2D playerRb;
     public float playerSpeed = 5f;
     public GameObject playerVisual;
@@ -42,10 +40,26 @@ public class PlayerShipController : MonoBehaviour
                 EnterSteering();
             }
         }
-
-        if (currentState == PlayerState.Fishing)
+        else if (currentState == PlayerState.Fishing)
         {
-            TryExitFishingWhenHookReturns();
+            // BALIK TUTARKEN E'YE BASARSAN YÜRÜMEYE DÖN
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                ExitToWalking();
+            }
+            else
+            {
+                // Veya kancayı manuel olarak yukarı kadar çektiysen otomatik dön
+                TryExitFishingWhenHookReturns();
+            }
+        }
+        else if (currentState == PlayerState.Steering)
+        {
+            // DÜMENDEYKEN E'YE BASARSAN DÜMENDEN AYRIL (BONUS EKLENDİ)
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                ExitToWalkingFromSteering();
+            }
         }
     }
 
@@ -59,8 +73,9 @@ public class PlayerShipController : MonoBehaviour
         {
             ApplyHorizontalMovement(shipRb, shipSpeed);
         }
-        else
+        else if (currentState == PlayerState.Fishing)
         {
+            // BALIK TUTARKEN HEM GEMİ HEM KARAKTER TAŞ GİBİ DURUR
             StopHorizontalMovement(playerRb);
             StopHorizontalMovement(shipRb);
         }
@@ -84,32 +99,59 @@ public class PlayerShipController : MonoBehaviour
     private void EnterSteering()
     {
         currentState = PlayerState.Steering;
-        SetPlayerVisualActive(false);
+        SetPlayerVisualActive(false); // Karakteri gizle (Dümene geçti)
         SetCameras(true, false);
+        SetPromptState(steerPromptCanvas, false);
     }
 
     private void EnterFishing()
     {
         currentState = PlayerState.Fishing;
-        SetPlayerVisualActive(false);
-        SetCameras(false, true);
+        SetPlayerVisualActive(false); // Karakteri gizle (Oltayı tutuyor)
+        SetCameras(false, true);      // Kanca kamerasına geç
+        SetPromptState(hookPromptCanvas, false);
 
-        if (FishingManager.Instance != null && FishingManager.Instance.hookController != null)
+        // FISHING MANAGER'A "BİZ BAŞLADIK" HABERİ VER (Çakışmayı önler)
+        if (FishingManager.Instance != null)
         {
-            FishingManager.Instance.hookController.SetFishingMode(true);
+            FishingManager.Instance.isFishingMode = true;
+            if (FishingManager.Instance.hookController != null)
+            {
+                FishingManager.Instance.hookController.SetFishingMode(true);
+            }
         }
     }
 
     private void ExitToWalking()
     {
         currentState = PlayerState.Walking;
+        SetPlayerVisualActive(true); // Karakteri göster
+        SetCameras(true, false);     // Gemi kamerasına dön
+
+        // FISHING MANAGER'I İPTAL ET VE KANCAYI GERİ ÇEK
+        if (FishingManager.Instance != null)
+        {
+            FishingManager.Instance.isFishingMode = false;
+
+            if (FishingManager.Instance.hookController != null)
+            {
+                FishingManager.Instance.hookController.SetFishingMode(false);
+            }
+
+            // Kancayı anında teknenin ucuna ışınla
+            if (FishingManager.Instance.hookTransform != null && FishingManager.Instance.ropeOrigin != null)
+            {
+                FishingManager.Instance.hookTransform.position = FishingManager.Instance.ropeOrigin.position;
+            }
+        }
+    }
+
+    // Dümenden ayrılmak için özel çıkış
+    private void ExitToWalkingFromSteering()
+    {
+        currentState = PlayerState.Walking;
         SetPlayerVisualActive(true);
         SetCameras(true, false);
-
-        if (FishingManager.Instance != null && FishingManager.Instance.hookController != null)
-        {
-            FishingManager.Instance.hookController.SetFishingMode(false);
-        }
     }
 
     private void TryExitFishingWhenHookReturns()
@@ -120,7 +162,9 @@ public class PlayerShipController : MonoBehaviour
         }
 
         float distance = Vector2.Distance(FishingManager.Instance.hookTransform.position, FishingManager.Instance.ropeOrigin.position);
-        if (distance <= hookReturnTolerance)
+
+        // Sadece balık tutma şalteri kapalıyken kanca yukarıdaysa çık
+        if (distance <= hookReturnTolerance && !FishingManager.Instance.isFishingMode)
         {
             ExitToWalking();
         }
@@ -128,10 +172,7 @@ public class PlayerShipController : MonoBehaviour
 
     private void SetPlayerVisualActive(bool active)
     {
-        if (playerVisual != null)
-        {
-            playerVisual.SetActive(active);
-        }
+        if (playerVisual != null) playerVisual.SetActive(active);
     }
 
     private void SetCameras(bool shipActive, bool hookActive)
@@ -142,10 +183,7 @@ public class PlayerShipController : MonoBehaviour
 
     private void SetPromptState(GameObject prompt, bool active)
     {
-        if (prompt != null)
-        {
-            prompt.SetActive(active);
-        }
+        if (prompt != null) prompt.SetActive(active);
     }
 
     private void OnTriggerStay2D(Collider2D other)
@@ -176,4 +214,3 @@ public class PlayerShipController : MonoBehaviour
         }
     }
 }
-

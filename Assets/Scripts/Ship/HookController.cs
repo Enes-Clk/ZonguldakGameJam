@@ -8,10 +8,12 @@ public class HookController : MonoBehaviour
 
     [Header("Ekran Sınırları")]
     public Vector2 minBounds = new Vector2(-15, -10);
-    public Vector2 maxBounds = new Vector2(15, 5); [Header("İp (Çizim) Ayarları")]
+    public Vector2 maxBounds = new Vector2(15, 5);
+
+    [Header("İp (Çizim) Ayarları")]
     public LineRenderer lineRenderer;
 
-    private bool isFishing = false;
+    public bool isFishing = false;
     private Vector3 currentDirection;
 
     public void SetFishingMode(bool state)
@@ -21,32 +23,28 @@ public class HookController : MonoBehaviour
         if (lineRenderer != null)
         {
             lineRenderer.enabled = state;
-            if (state)
-            {
-                // DÜZELTME: Sonsuz nokta eklemek yerine her zaman 2 noktalı gergin ip oluşturulur.
-                lineRenderer.positionCount = 2;
-            }
+            if (state) lineRenderer.positionCount = 2;
         }
 
-        if (isFishing)
-        {
-            currentDirection = Vector3.down;
-        }
+        if (isFishing) currentDirection = Vector3.down;
     }
 
     void Update()
     {
-        if (!isFishing) return;
+        // YENİ EKLENEN KISIM: Eğer balık tutma modunda değilsek, kanca zorla teknede kalsın!
+        if (!isFishing)
+        {
+            if (FishingManager.Instance != null && FishingManager.Instance.ropeOrigin != null)
+            {
+                transform.position = FishingManager.Instance.ropeOrigin.position; // Sürekli teknede tut
+                transform.rotation = Quaternion.Euler(0, 0, spriteRotationOffset); // İptal olunca düzelt
+            }
+            return;
+        }
 
-        // Değerleri menajerden çek
         float currentSpeed = FishingManager.Instance.GetCurrentSpeed();
         minBounds.y = FishingManager.Instance.GetCurrentMaxDepth();
-
-        // DÜZELTME: Kanca, ipin başladığı tekneden (veya oltanın ucundan) daha yukarı uçamaz.
-        if (FishingManager.Instance.ropeOrigin != null)
-        {
-            maxBounds.y = FishingManager.Instance.ropeOrigin.position.y;
-        }
+        if (FishingManager.Instance.ropeOrigin != null) maxBounds.y = FishingManager.Instance.ropeOrigin.position.y;
 
         float moveX = Input.GetAxisRaw("Horizontal");
         float moveY = Input.GetAxisRaw("Vertical");
@@ -76,9 +74,7 @@ public class HookController : MonoBehaviour
 
     private void UpdateFishingLine()
     {
-        // DÜZELTME: İp gergin ve optimizasyonlu çizilir, frame droplar (kasmalar) engellenir.
         if (lineRenderer == null || !isFishing) return;
-
         lineRenderer.SetPosition(0, FishingManager.Instance.ropeOrigin.position);
         lineRenderer.SetPosition(1, transform.position);
     }
@@ -87,9 +83,6 @@ public class HookController : MonoBehaviour
     {
         if (!isFishing) return;
         Fish hitFish = other.GetComponent<Fish>();
-        if (hitFish != null)
-        {
-            hitFish.TakeDamage(FishingManager.Instance.GetCurrentDamage() * Time.deltaTime);
-        }
+        if (hitFish != null) hitFish.TakeDamage(FishingManager.Instance.GetCurrentDamage() * Time.deltaTime);
     }
 }

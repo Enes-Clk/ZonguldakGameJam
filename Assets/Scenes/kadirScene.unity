@@ -132,7 +132,7 @@ GameObject:
   - component: {fileID: 9554922}
   m_Layer: 6
   m_Name: Hook_Trigger
-  m_TagString: Untagged
+  m_TagString: HookZone
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -543,7 +543,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &376670153
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -736,7 +736,7 @@ GameObject:
   - component: {fileID: 518093715}
   - component: {fileID: 518093717}
   - component: {fileID: 518093720}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Hook
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -760,6 +760,7 @@ MonoBehaviour:
   minBounds: {x: -15, y: -10}
   maxBounds: {x: 15, y: 5}
   lineRenderer: {fileID: 1133211314}
+  isFishing: 0
 --- !u!4 &518093716
 Transform:
   m_ObjectHideFlags: 0
@@ -849,7 +850,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 6
+  m_SortingOrder: 7
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7221084808420587340, guid: 32d74dfc5ada5104296a88ec3fd76820, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -1014,7 +1015,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 6.249532
+  orthographic size: 3.22
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -1039,7 +1040,7 @@ Transform:
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3.48, y: 1.15, z: -10}
+  m_LocalPosition: {x: 0.1289, y: 1.2272, z: -10}
   m_LocalScale: {x: 1.2375, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1179,7 +1180,7 @@ GameObject:
   - component: {fileID: 800461121}
   m_Layer: 6
   m_Name: Door_Trigger
-  m_TagString: Untagged
+  m_TagString: SteerZone
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1347,7 +1348,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1066974237
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1574,6 +1575,7 @@ GameObject:
   - component: {fileID: 1117886973}
   - component: {fileID: 1117886974}
   - component: {fileID: 1117886972}
+  - component: {fileID: 1117886975}
   m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
@@ -1590,7 +1592,7 @@ Transform:
   m_GameObject: {fileID: 1117886970}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -4.9376, y: -0.80582285, z: 0}
+  m_LocalPosition: {x: -1.77, y: 0.95, z: 0}
   m_LocalScale: {x: 1.8431447, y: 1.8431447, z: 1.8431447}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1608,7 +1610,7 @@ Rigidbody2D:
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
-  m_Mass: 1
+  m_Mass: 0.0001
   m_LinearDamping: 0
   m_AngularDamping: 0.05
   m_GravityScale: 1
@@ -1622,7 +1624,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!212 &1117886973
 SpriteRenderer:
   serializedVersion: 2
@@ -1670,10 +1672,10 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 4
   m_MaskInteraction: 0
   m_Sprite: {fileID: -9095717837082945937, guid: 207ee8102dd4143d288186ef0be518ee, type: 3}
-  m_Color: {r: 0.33962262, g: 0.33962262, b: 0.33962262, a: 1}
+  m_Color: {r: 1, g: 0, b: 0, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -1707,6 +1709,43 @@ MonoBehaviour:
   isNearSteerZone: 0
   isNearHookZone: 0
   hookReturnTolerance: 0.05
+--- !u!70 &1117886975
+CapsuleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1117886970}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Size: {x: 1, y: 2}
+  m_Direction: 0
 --- !u!1 &1133211313
 GameObject:
   m_ObjectHideFlags: 0
@@ -1772,7 +1811,7 @@ LineRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 7
   m_MaskInteraction: 0
   m_Positions:
   - {x: 0, y: 0, z: 0}
@@ -1850,6 +1889,8 @@ MonoBehaviour:
   ropeOrigin: {fileID: 1586739197}
   hookTransform: {fileID: 518093716}
   hookController: {fileID: 518093715}
+  vcamShip: {fileID: 376670152}
+  vcamHook: {fileID: 1066974236}
   moneyText: {fileID: 1093244197}
   speedButtonText: {fileID: 0}
   damageButtonText: {fileID: 0}
@@ -1866,7 +1907,7 @@ MonoBehaviour:
   damageIncrease: 25
   depthIncrease: -5
   baseUpgradeCost: 0
-  enableManualToggle: 0
+  isFishingMode: 0
 --- !u!4 &1133211316
 Transform:
   m_ObjectHideFlags: 0
@@ -1907,7 +1948,7 @@ Transform:
   m_GameObject: {fileID: 1586739196}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.437, y: 0.6, z: 0}
+  m_LocalPosition: {x: -6.97, y: 0.59, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2607,7 +2648,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1237587993747748306, guid: 6915b05416ae30248b87ea9ac698ecd7, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5070280728347968443, guid: 6915b05416ae30248b87ea9ac698ecd7, type: 3}
       propertyPath: m_Layer
