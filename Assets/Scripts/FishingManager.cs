@@ -30,6 +30,9 @@ public class FishingManager : MonoBehaviour
     public float depthIncrease = -5f; [Header("Fiyat Ayarları")]
     public int baseUpgradeCost = 100;
 
+    [Header("Input")]
+    public bool enableManualToggle = false;
+
     private bool isFishingMode = false;
 
     private void Awake()
@@ -45,7 +48,10 @@ public class FishingManager : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.E)) ToggleFishingMode();
+        if (enableManualToggle && Input.GetKeyDown(KeyCode.E))
+        {
+            ToggleFishingMode();
+        }
     }
 
     void ToggleFishingMode()
