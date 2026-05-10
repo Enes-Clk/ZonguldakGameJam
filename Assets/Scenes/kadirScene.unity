@@ -1369,10 +1369,10 @@ MonoBehaviour:
   damageLevel: 1
   distanceLevel: 1
   maxLevel: 10
-  baseSpeed: 5
-  baseDamage: 50
+  baseSpeed: 3
+  baseDamage: 25
   baseDepth: -10
-  speedIncrease: 1.5
+  speedIncrease: 1.2
   damageIncrease: 25
   depthIncrease: -5
   baseUpgradeCost: 0
