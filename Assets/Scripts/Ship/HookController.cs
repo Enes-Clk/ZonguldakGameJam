@@ -13,12 +13,18 @@ public class HookController : MonoBehaviour
     [Header("İp (Çizim) Ayarları")]
     public LineRenderer lineRenderer;
 
+    [Header("Limits")]
+    public float hookTimeLimit = 12f;
+
+    private float hookTimer;
+
     public bool isFishing = false;
     private Vector3 currentDirection;
 
     public void SetFishingMode(bool state)
     {
         isFishing = state;
+        hookTimer = 0f;
 
         if (lineRenderer != null)
         {
@@ -39,6 +45,19 @@ public class HookController : MonoBehaviour
                 transform.position = FishingManager.Instance.ropeOrigin.position; // Sürekli teknede tut
                 transform.rotation = Quaternion.Euler(0, 0, spriteRotationOffset); // İptal olunca düzelt
             }
+            return;
+        }
+
+        hookTimer += Time.deltaTime;
+        if (hookTimeLimit > 0f && hookTimer >= hookTimeLimit)
+        {
+            ReelHook();
+            return;
+        }
+
+        if (IsInventoryFull())
+        {
+            ReelHook();
             return;
         }
 
@@ -70,6 +89,22 @@ public class HookController : MonoBehaviour
         }
 
         UpdateFishingLine();
+    }
+
+    private bool IsInventoryFull()
+    {
+        if (PersistentManager.Instance == null || DayManager.Instance == null) return false;
+        int maxInv = DayManager.Instance.GetFinalMaxInventory();
+        return PersistentManager.Instance.fishCount >= maxInv;
+    }
+
+    private void ReelHook()
+    {
+        SetFishingMode(false);
+        if (FishingManager.Instance != null && FishingManager.Instance.ropeOrigin != null)
+        {
+            transform.position = FishingManager.Instance.ropeOrigin.position;
+        }
     }
 
     private void UpdateFishingLine()

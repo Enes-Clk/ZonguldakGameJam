@@ -93,9 +93,33 @@ public class FishingManager : MonoBehaviour
         }
     }
 
-    public float GetCurrentSpeed() => baseSpeed + (speedLevel - 1) * speedIncrease;
-    public float GetCurrentDamage() => baseDamage + (damageLevel - 1) * damageIncrease;
-    public float GetCurrentMaxDepth() => baseDepth + (distanceLevel - 1) * depthIncrease;
+    public float GetCurrentSpeed()
+    {
+        if (PersistentManager.Instance != null && DayManager.Instance != null)
+        {
+            return DayManager.Instance.GetFinalHookSpeed();
+        }
+        return baseSpeed + (speedLevel - 1) * speedIncrease;
+    }
+
+    public float GetCurrentDamage()
+    {
+        if (PersistentManager.Instance != null && DayManager.Instance != null)
+        {
+            return DayManager.Instance.GetFinalHookDamage();
+        }
+        return baseDamage + (damageLevel - 1) * damageIncrease;
+    }
+
+    public float GetCurrentMaxDepth()
+    {
+        if (PersistentManager.Instance != null && DayManager.Instance != null)
+        {
+            return DayManager.Instance.GetFinalHookDistance();
+        }
+        return baseDepth + (distanceLevel - 1) * depthIncrease;
+    }
+
     public int GetCost(int level) => baseUpgradeCost * level;
 
     public void UpdateAllUI()

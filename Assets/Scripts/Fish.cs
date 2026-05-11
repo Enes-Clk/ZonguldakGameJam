@@ -75,7 +75,11 @@ public class Fish : MonoBehaviour
         {
             isCaught = true;
 
-            if (FishingManager.Instance != null)
+            if (PersistentManager.Instance != null)
+            {
+                PersistentManager.Instance.AddFish(1);
+            }
+            else if (FishingManager.Instance != null)
             {
                 FishingManager.Instance.AddMoney(fishValue);
             }
