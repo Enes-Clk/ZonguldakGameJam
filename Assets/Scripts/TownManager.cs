@@ -63,6 +63,7 @@ public class TownManager : MonoBehaviour
         if (!other.CompareTag("Player")) return;
 
         if (sellTrigger != null && other.IsTouching(sellTrigger))
+        if (sellTrigger != null && other.IsTouching(sellTrigger))
         {
             _currentZone = TownZone.Sell;
             SetPrompt(sellPrompt, true);

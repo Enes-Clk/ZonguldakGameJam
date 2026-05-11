@@ -20,6 +20,10 @@ public class PMovement : MonoBehaviour
         Flip();
         AnimatorVariables();
     }
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        Debug.Log("Tetiklendi: " + other.name);
+    }
 
     void FixedUpdate()
     {
