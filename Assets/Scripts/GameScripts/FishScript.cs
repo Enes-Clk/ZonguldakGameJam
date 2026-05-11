@@ -14,6 +14,7 @@ public class FishScript : MonoBehaviour
         sr = GetComponent<SpriteRenderer>();
         directionChangeInterval = 0f; // Hemen yön seçmeye başla
         currentDirection = new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), 0).normalized * speed;
+        damageCooldown = 0f;
     }
 
     void Update()
@@ -49,6 +50,14 @@ public class FishScript : MonoBehaviour
         }
     }
 
+    void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.CompareTag("Hook"))
+        {
+            damageCooldown = 0f; // Kanca temasından çıktıktan sonra cooldown'u sıfırla
+        }
+    }
+
     private void TakeDamage(int damage)
     {
         health -= damage;
@@ -79,7 +88,7 @@ public class FishScript : MonoBehaviour
         directionChangeInterval -= Time.deltaTime;
         if(directionChangeInterval <= 0f)
         {
-            directionChangeInterval = 3f; // Yön değiştirme süresini sıfırla
+            directionChangeInterval = 2f; // Yön değiştirme süresini sıfırla
             currentDirection = new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), 0).normalized * speed;
         }
         

@@ -5,9 +5,15 @@ public class HookControllerNew : MonoBehaviour
     public float hookSpeed = 5f; // Kancanın su altındaki hızı
     public float returnSpeed = 8f; // Kancanın geri dönüş hızı
     public float maxDistance = 10f; // Kanca gemiden en fazla ne kadar uzaklaşabilir?
+
+    [Header("Kanca İnme Mesafesi")]
+    public float startDepth = 5f; // Kanca suya ne kadar indikten sonra hareket etmeye başlasın?
     
     [Header("Kamera Ayarları")]
     public float cameraFollowSpeed = 5f; // Kameranın takip hızı
+    
+    [Header("Rotasyon Ayarları")]
+    public float rotationSpeed = 10f; // Hook'un dönüş hızı
     
     [Header("Referanslar")]
     public Transform rodTip; // İpin başlayacağı yer (Gemideki nokta)
@@ -17,7 +23,7 @@ public class HookControllerNew : MonoBehaviour
     private Rigidbody2D rb;
     private bool isFishing = false; // Balık tutma modunda mıyız?
     private bool isReturning = false; // Kanca geri dönüyor mu?
-    private Vector3 originalCameraPos; // Orijinal kamera pozisyonu
+    private Vector2 lastInputDirection = Vector2.down; // Son input yönü (varsayılan olarak aşağı)
 
     void Start()
     {
@@ -48,6 +54,7 @@ public class HookControllerNew : MonoBehaviour
             MoveHook();
             DrawRope();
             FollowHookWithCamera();
+            RotateHook(lastInputDirection);
         }
         
         // Kanca geri dönüyorsa
@@ -56,6 +63,7 @@ public class HookControllerNew : MonoBehaviour
             ReturnHook();
             DrawRope();
             FollowHookWithCamera();
+            RotateHook((rodTip.position - transform.position).normalized);
         }
     }
 
@@ -66,6 +74,13 @@ public class HookControllerNew : MonoBehaviour
         float moveY = Input.GetAxis("Vertical");
 
         Vector2 movement = new Vector2(moveX, moveY) * hookSpeed;
+        Vector2 direction = new Vector2(moveX, moveY);
+        
+        // Input yönünü kaydet (rotasyon için)
+        if (direction.magnitude > 0)
+        {
+            lastInputDirection = direction.normalized;
+        }
         
         // Kancanın gemiden (rodTip) çok fazla uzaklaşmasını engelliyoruz
         float distanceFromShip = Vector2.Distance(transform.position, rodTip.position);
@@ -76,9 +91,22 @@ public class HookControllerNew : MonoBehaviour
             // Basitçe kancayı sınırda tutmak için merkeze doğru hafifçe çekebiliriz
             Vector2 directionToShip = (rodTip.position - transform.position).normalized;
             movement += directionToShip * hookSpeed; 
+            
         }
 
         rb.linearVelocity = movement;
+    }
+    
+    private void RotateHook(Vector2 direction)
+    {
+        if (direction.magnitude <= 0.1f) return; // Input yoksa döndürme
+        
+        // Input yönünün açısını hesapla (derece cinsinden)
+        float targetAngle = Mathf.Atan2(direction.x, -direction.y) * Mathf.Rad2Deg;
+        
+        // Hook'u hedef açıya doğru smooth şekilde döndür
+        Quaternion targetRotation = Quaternion.AngleAxis(targetAngle, Vector3.forward);
+        transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
     }
 
     private void DrawRope()
@@ -96,11 +124,11 @@ public class HookControllerNew : MonoBehaviour
         shipController.isFishing = true; // Balık tutma modunu işaretle
         shipController.FreezeShip(); // Gemiyi sabitle
 
+        
+
         // Kancayı görünür yap ve geminin yanına ışınla
         transform.position = rodTip.position;
         
-        // Orijinal kamera pozisyonunu kaydet
-        originalCameraPos = Camera.main.transform.position;
     }
 
     private void StopFishing()
@@ -130,7 +158,7 @@ public class HookControllerNew : MonoBehaviour
             lineRenderer.positionCount = 0; // İpi gizle
             
             // Kamerayı orijinal pozisyonuna geri döndür
-            Camera.main.transform.position = originalCameraPos;
+            CamFollow.Instance.ResetToPlayer();
             
             // Gemiyi tekrar hareket edebilir yap
             shipController.isPlayerInside = true;
@@ -140,10 +168,7 @@ public class HookControllerNew : MonoBehaviour
     
     private void FollowHookWithCamera()
     {
-        // Kamerayı hook'un pozisyonunu doğrudan takip etmesi için ayarla (titremeyi önlemek için)
-        Vector3 hookPos = transform.position;
-        Vector3 targetCameraPos = new Vector3(hookPos.x, hookPos.y, originalCameraPos.z);
-        Camera.main.transform.position = targetCameraPos;
+        CamFollow.Instance.SetTarget(transform);
     }
 
     // KANCA BALIĞA DEĞDİ Mİ?
@@ -154,6 +179,7 @@ public class HookControllerNew : MonoBehaviour
             Debug.Log("Balık Yakalandı!");
             // Şimdilik balığı yok edelim. İleride buraya envanter veya skor kodu ekleyebilirsin.
             //damage fish
+            GameManager.Instance.FishCaught();
         }
     }
 }

@@ -47,10 +47,7 @@ public class ShipController : MonoBehaviour
         player.SetActive(false);
         
         // Kamerayı tekneye odakla
-        if (Camera.main != null && Camera.main.GetComponent<CamFollow>() != null)
-        {
-            Camera.main.GetComponent<CamFollow>().target = transform;
-        }
+        CamFollow.Instance.SetTarget(transform);
     }
 
     private void ExitShip()
@@ -61,10 +58,7 @@ public class ShipController : MonoBehaviour
         rb.linearVelocity = Vector2.zero; // Gemi Kaymasın diye
         
         // Kamerayı player'a geri odakla
-        if (Camera.main != null && Camera.main.GetComponent<CamFollow>() != null)
-        {
-            Camera.main.GetComponent<CamFollow>().target = player.transform;
-        }
+        CamFollow.Instance.ResetToPlayer();
     }
 
     private void MoveShip()
