@@ -10,6 +10,7 @@ TagManager:
   - Fish
   - Hook
   - Border
+  - SuYuzeyi
   layers:
   - Default
   - TransparentFX

@@ -71,6 +71,7 @@ public class FishScript : MonoBehaviour
 
     void Die()
     {
+        GameManager.Instance.FishCaught(); // Balık yakalandığını GameManager'a bildir
         Destroy(gameObject);
     }
 
