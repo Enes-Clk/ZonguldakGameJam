@@ -24,6 +24,8 @@ public class FishScript : MonoBehaviour
         {
             currentDirection *= -1;
         }
+
+        Flip();
     }
     void OnTriggerStay2D(Collider2D collision)
     {
@@ -93,5 +95,17 @@ public class FishScript : MonoBehaviour
         }
         
         transform.Translate(currentDirection * 0.1f * Time.deltaTime);
+    }
+
+    void Flip()
+    {
+        if (currentDirection.x > 0)
+        {
+            sr.flipX = false;
+        }
+        else if (currentDirection.x < 0)
+        {
+            sr.flipX = true;
+        }
     }
 }
