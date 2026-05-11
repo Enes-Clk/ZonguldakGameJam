@@ -7,12 +7,6 @@ public class TownManager : MonoBehaviour
 {
     public enum TownZone { None, Sell, Upgrade, TempUpgrade, Home }
 
-    [Header("Triggers")]
-    public Collider2D sellTrigger;
-    public Collider2D upgradeTrigger;
-    public Collider2D tempUpgradeTrigger;
-    public Collider2D homeTrigger;
-
     [Header("Panels")]
     public GameObject sellPanel;
     public GameObject upgradePanel;
@@ -32,81 +26,64 @@ public class TownManager : MonoBehaviour
 
     private TownZone _currentZone = TownZone.None;
 
-    private void Update()
+    // ZoneTrigger scriptleri bu iki metodu çağırır
+    public void OnZoneEnter(TownZone zone, Collider2D player)
     {
-        if (_currentZone == TownZone.None) return;
-
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            if (_currentZone == TownZone.Sell)
-            {
-                OpenPanel(sellPanel);
-                SellAllFish();
-            }
-            else if (_currentZone == TownZone.Upgrade)
-            {
-                OpenPanel(upgradePanel);
-            }
-            else if (_currentZone == TownZone.TempUpgrade)
-            {
-                OpenPanel(tempUpgradePanel);
-            }
-            else if (_currentZone == TownZone.Home)
-            {
-                StartCoroutine(EndDayRoutine());
-            }
-        }
+        _currentZone = zone;
+        SetPrompt(sellPrompt,        zone == TownZone.Sell);
+        SetPrompt(upgradePrompt,     zone == TownZone.Upgrade);
+        SetPrompt(tempUpgradePrompt, zone == TownZone.TempUpgrade);
+        SetPrompt(homePrompt,        zone == TownZone.Home);
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    public void OnZoneExit(TownZone zone)
     {
-        if (!other.CompareTag("Player")) return;
-
-        if (sellTrigger != null && other.IsTouching(sellTrigger))
-        if (sellTrigger != null && other.IsTouching(sellTrigger))
+        // Sadece çıkılan zone aktifse sıfırla (iki zone üst üste gelirse sorun olmaz)
+        if (_currentZone == zone)
         {
-            _currentZone = TownZone.Sell;
-            SetPrompt(sellPrompt, true);
-        }
-        else if (upgradeTrigger != null && other.IsTouching(upgradeTrigger))
-        {
-            _currentZone = TownZone.Upgrade;
-            SetPrompt(upgradePrompt, true);
-        }
-        else if (tempUpgradeTrigger != null && other.IsTouching(tempUpgradeTrigger))
-        {
-            _currentZone = TownZone.TempUpgrade;
-            SetPrompt(tempUpgradePrompt, true);
-        }
-        else if (homeTrigger != null && other.IsTouching(homeTrigger))
-        {
-            _currentZone = TownZone.Home;
-            SetPrompt(homePrompt, true);
-        }
-    }
-
-    private void OnTriggerExit2D(Collider2D other)
-    {
-        if (!other.CompareTag("Player")) return;
-
-        if (sellTrigger != null && other.IsTouching(sellTrigger) == false)
-        {
+            _currentZone = TownZone.None;
             SetPrompt(sellPrompt, false);
-        }
-        if (upgradeTrigger != null && other.IsTouching(upgradeTrigger) == false)
-        {
             SetPrompt(upgradePrompt, false);
-        }
-        if (tempUpgradeTrigger != null && other.IsTouching(tempUpgradeTrigger) == false)
-        {
             SetPrompt(tempUpgradePrompt, false);
-        }
-        if (homeTrigger != null && other.IsTouching(homeTrigger) == false)
-        {
             SetPrompt(homePrompt, false);
         }
+    }
 
-        _currentZone = TownZone.None;
+    private void Update()
+    {
+        // ESC — açık paneli kapat
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            CloseAllPanels();
+            return;
+        }
+
+        if (_currentZone == TownZone.None) return;
+        if (!Input.GetKeyDown(KeyCode.E)) return;
+
+        switch (_currentZone)
+        {
+            case TownZone.Sell:
+                OpenPanel(sellPanel);
+                SellAllFish();
+                break;
+            case TownZone.Upgrade:
+                OpenPanel(upgradePanel);
+                break;
+            case TownZone.TempUpgrade:
+                OpenPanel(tempUpgradePanel);
+                break;
+            case TownZone.Home:
+                StartCoroutine(EndDayRoutine());
+                break;
+        }
+    }
+    private void CloseAllPanels()
+    {
+        if (sellPanel != null)        sellPanel.SetActive(false);
+        if (upgradePanel != null)     upgradePanel.SetActive(false);
+        if (tempUpgradePanel != null) tempUpgradePanel.SetActive(false);
+        if (homePanel != null)        homePanel.SetActive(false);
     }
 
     private void SetPrompt(GameObject prompt, bool active)
@@ -116,14 +93,12 @@ public class TownManager : MonoBehaviour
 
     private void OpenPanel(GameObject panel)
     {
-        if (panel == null) return;
-        panel.SetActive(true);
+        if (panel != null) panel.SetActive(true);
     }
 
     private void SellAllFish()
     {
         if (PersistentManager.Instance == null) return;
-
         int earnings = PersistentManager.Instance.fishCount * 10;
         PersistentManager.Instance.AddMoney(earnings);
         PersistentManager.Instance.ResetFish();
@@ -138,19 +113,13 @@ public class TownManager : MonoBehaviour
         }
 
         if (PersistentManager.Instance != null)
-        {
             PersistentManager.Instance.currentDay += 1;
-        }
 
         if (dayText != null && PersistentManager.Instance != null)
-        {
-            dayText.text = "G\u00fcn: " + PersistentManager.Instance.currentDay;
-        }
+            dayText.text = "Gün: " + PersistentManager.Instance.currentDay;
 
         yield return new WaitForSeconds(0.8f);
-
-        Scene currentScene = SceneManager.GetActiveScene();
-        SceneManager.LoadScene(currentScene.name);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     private IEnumerator FadeCanvas(float from, float to, float duration)
@@ -159,10 +128,9 @@ public class TownManager : MonoBehaviour
         while (timer < duration)
         {
             timer += Time.deltaTime;
-            float t = Mathf.Clamp01(timer / duration);
-            if (fadeGroup != null) fadeGroup.alpha = Mathf.Lerp(from, to, t);
+            fadeGroup.alpha = Mathf.Lerp(from, to, Mathf.Clamp01(timer / duration));
             yield return null;
         }
-        if (fadeGroup != null) fadeGroup.alpha = to;
+        fadeGroup.alpha = to;
     }
 }
