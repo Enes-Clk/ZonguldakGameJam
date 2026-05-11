@@ -5,21 +5,24 @@ using TMPro;
 
 public class TownManager : MonoBehaviour
 {
-    public enum TownZone { None, Sell, Upgrade, Home }
+    public enum TownZone { None, Sell, Upgrade, TempUpgrade, Home }
 
     [Header("Triggers")]
     public Collider2D sellTrigger;
     public Collider2D upgradeTrigger;
+    public Collider2D tempUpgradeTrigger;
     public Collider2D homeTrigger;
 
     [Header("Panels")]
     public GameObject sellPanel;
     public GameObject upgradePanel;
+    public GameObject tempUpgradePanel;
     public GameObject homePanel;
 
     [Header("Prompts")]
     public GameObject sellPrompt;
     public GameObject upgradePrompt;
+    public GameObject tempUpgradePrompt;
     public GameObject homePrompt;
 
     [Header("Home UI")]
@@ -44,6 +47,10 @@ public class TownManager : MonoBehaviour
             {
                 OpenPanel(upgradePanel);
             }
+            else if (_currentZone == TownZone.TempUpgrade)
+            {
+                OpenPanel(tempUpgradePanel);
+            }
             else if (_currentZone == TownZone.Home)
             {
                 StartCoroutine(EndDayRoutine());
@@ -65,6 +72,11 @@ public class TownManager : MonoBehaviour
             _currentZone = TownZone.Upgrade;
             SetPrompt(upgradePrompt, true);
         }
+        else if (tempUpgradeTrigger != null && other.IsTouching(tempUpgradeTrigger))
+        {
+            _currentZone = TownZone.TempUpgrade;
+            SetPrompt(tempUpgradePrompt, true);
+        }
         else if (homeTrigger != null && other.IsTouching(homeTrigger))
         {
             _currentZone = TownZone.Home;
@@ -83,6 +95,10 @@ public class TownManager : MonoBehaviour
         if (upgradeTrigger != null && other.IsTouching(upgradeTrigger) == false)
         {
             SetPrompt(upgradePrompt, false);
+        }
+        if (tempUpgradeTrigger != null && other.IsTouching(tempUpgradeTrigger) == false)
+        {
+            SetPrompt(tempUpgradePrompt, false);
         }
         if (homeTrigger != null && other.IsTouching(homeTrigger) == false)
         {
@@ -149,4 +165,3 @@ public class TownManager : MonoBehaviour
         if (fadeGroup != null) fadeGroup.alpha = to;
     }
 }
-
