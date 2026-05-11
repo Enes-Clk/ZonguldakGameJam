@@ -722,6 +722,7 @@ MonoBehaviour:
   player: {fileID: 1234767030}
   isPlayerNeerDoor: 0
   isPlayerInside: 0
+  isFishing: 0
 --- !u!50 &443206600
 Rigidbody2D:
   serializedVersion: 5
@@ -2257,7 +2258,7 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 959939891}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
@@ -2289,7 +2290,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HookControllerNew
   hookSpeed: 5
-  maxDistance: 10
+  returnSpeed: 8
+  maxDistance: 8
+  cameraFollowSpeed: 5
   rodTip: {fileID: 1767397020}
   lineRenderer: {fileID: 786908451}
   shipController: {fileID: 443206599}

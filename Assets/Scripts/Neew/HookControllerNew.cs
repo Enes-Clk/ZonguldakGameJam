@@ -3,7 +3,11 @@ using UnityEngine;
 public class HookControllerNew : MonoBehaviour
 {[Header("Kanca Ayarları")]
     public float hookSpeed = 5f; // Kancanın su altındaki hızı
+    public float returnSpeed = 8f; // Kancanın geri dönüş hızı
     public float maxDistance = 10f; // Kanca gemiden en fazla ne kadar uzaklaşabilir?
+    
+    [Header("Kamera Ayarları")]
+    public float cameraFollowSpeed = 5f; // Kameranın takip hızı
     
     [Header("Referanslar")]
     public Transform rodTip; // İpin başlayacağı yer (Gemideki nokta)
@@ -12,21 +16,23 @@ public class HookControllerNew : MonoBehaviour
 
     private Rigidbody2D rb;
     private bool isFishing = false; // Balık tutma modunda mıyız?
+    private bool isReturning = false; // Kanca geri dönüyor mu?
+    private Vector3 originalCameraPos; // Orijinal kamera pozisyonu
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         
         // Oyun başladığında kancayı gizle
-        gameObject.SetActive(false);
+        gameObject.SetActive(true);
         lineRenderer.positionCount = 0; // İpi gizle
     }
 
     void Update()
     {
         // Oyuncu F tuşuna basarsa balık modunu aç/kapat
-        // SADECE geminin içindeyken balık tutabilsin diye ShipController'ı kontrol ediyoruz.
-        if (Input.GetKeyDown(KeyCode.F) && shipController.isPlayerInside)
+        // Geminin içindeyken VEYA balık tutarken F tuşu çalışsın
+        if (Input.GetKeyDown(KeyCode.F) && (shipController.isPlayerInside || isFishing))
         {
             isFishing = !isFishing;
 
@@ -41,6 +47,15 @@ public class HookControllerNew : MonoBehaviour
         {
             MoveHook();
             DrawRope();
+            FollowHookWithCamera();
+        }
+        
+        // Kanca geri dönüyorsa
+        if (isReturning)
+        {
+            ReturnHook();
+            DrawRope();
+            FollowHookWithCamera();
         }
     }
 
@@ -77,22 +92,58 @@ public class HookControllerNew : MonoBehaviour
     private void StartFishing()
     {
         // Gemiyi durdur (Birazdan ShipController'a bu özelliği ekleyeceğiz)
-        shipController.isPlayerInside = false; 
+        shipController.isPlayerInside = false;
+        shipController.isFishing = true; // Balık tutma modunu işaretle
+        shipController.FreezeShip(); // Gemiyi sabitle
 
         // Kancayı görünür yap ve geminin yanına ışınla
         transform.position = rodTip.position;
-        gameObject.SetActive(true);
+        
+        // Orijinal kamera pozisyonunu kaydet
+        originalCameraPos = Camera.main.transform.position;
     }
 
     private void StopFishing()
     {
-        // Gemiyi tekrar hareket edebilir yap
-        shipController.isPlayerInside = true;
-
-        // Kancayı ve ipi gizle
-        gameObject.SetActive(false);
-        lineRenderer.positionCount = 0;
-        rb.linearVelocity = Vector2.zero;
+        // Kancayı geri çek
+        isFishing = false;
+        isReturning = true;
+        rb.linearVelocity = Vector2.zero; // Hareketi durdur
+        
+        shipController.isFishing = false; // Balık tutma modunu kapat
+    }
+    
+    private void ReturnHook()
+    {
+        // Kancayı rod tip konumuna doğru hareket ettir
+        Vector2 directionToRod = (rodTip.position - transform.position).normalized;
+        rb.linearVelocity = directionToRod * returnSpeed;
+        
+        // Kanca rod tip'e yakın mı kontrol et
+        float distanceToRod = Vector2.Distance(transform.position, rodTip.position);
+        if (distanceToRod < 0.3f)
+        {
+            // Kanca rod tip'e ulaştı
+            transform.position = rodTip.position;
+            rb.linearVelocity = Vector2.zero;
+            isReturning = false;
+            lineRenderer.positionCount = 0; // İpi gizle
+            
+            // Kamerayı orijinal pozisyonuna geri döndür
+            Camera.main.transform.position = originalCameraPos;
+            
+            // Gemiyi tekrar hareket edebilir yap
+            shipController.isPlayerInside = true;
+            shipController.UnfreezeShip(); // Gemiyi serbest bırak
+        }
+    }
+    
+    private void FollowHookWithCamera()
+    {
+        // Kamerayı hook'un pozisyonunu doğrudan takip etmesi için ayarla (titremeyi önlemek için)
+        Vector3 hookPos = transform.position;
+        Vector3 targetCameraPos = new Vector3(hookPos.x, hookPos.y, originalCameraPos.z);
+        Camera.main.transform.position = targetCameraPos;
     }
 
     // KANCA BALIĞA DEĞDİ Mİ?
