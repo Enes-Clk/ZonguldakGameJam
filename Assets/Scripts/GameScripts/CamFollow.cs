@@ -1,50 +1,62 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class CamFollow : MonoBehaviour
 {
-	public static CamFollow Instance { get; private set; }
+    public static CamFollow Instance { get; private set; }
     public Transform target;
     public Transform playerTarget;
-	public Vector3 offset = new Vector3(0, 0, -10);
-	public float smooth = 0.125f;
+    public Vector3 offset = new Vector3(0, 0, -10);
+    public float smooth = 0.125f;
 
-	Vector3 velocity = Vector3.zero;
+    private Vector3 _velocity = Vector3.zero;
 
-	void Start()
-	{
-		if(playerTarget == null)
-		{
-			playerTarget = GameObject.FindGameObjectWithTag("Player").transform;
-		}
-	}
-	void Awake()
-	{
-		if (Instance == null)
-		{
-			Instance = this;
-			DontDestroyOnLoad(gameObject);
-		}
-		else
-		{
-			Destroy(gameObject);
-		}
-	}
-	void FixedUpdate() //If player movement code runs in Update, this method should also run in LateUpdate to avoid jittering
-	{
-		Vector3 movePosition = target.position + offset;
-		transform.position = Vector3.SmoothDamp(transform.position, movePosition, ref velocity, smooth);
-	}
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+            SceneManager.sceneLoaded += OnSceneLoaded;  // sahne yüklenince çağır
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
 
-	public void SetTarget(Transform newTarget)
-	{
-		target = newTarget;
-	}
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;  // bellek sızıntısını önle
+    }
 
-	public void ResetToPlayer()
-	{
-		target = playerTarget;
-	}
+    // Her sahne yüklendiğinde player'ı yeniden bul
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            playerTarget = player.transform;
+            target = playerTarget;
+        }
+    }
 
+    private void FixedUpdate()
+    {
+        // Null kontrolü — destroy edilmiş referanslara erişimi engelle
+        if (target == null) return;
 
-	
+        Vector3 movePosition = target.position + offset;
+        transform.position = Vector3.SmoothDamp(transform.position, movePosition, ref _velocity, smooth);
+    }
+
+    public void SetTarget(Transform newTarget)
+    {
+        target = newTarget;
+    }
+
+    public void ResetToPlayer()
+    {
+        target = playerTarget;
+    }
 }

@@ -10,6 +10,8 @@ TagManager:
   - Fish
   - Hook
   - Border
+  - Limit
+  - Tekne
   layers:
   - Default
   - TransparentFX

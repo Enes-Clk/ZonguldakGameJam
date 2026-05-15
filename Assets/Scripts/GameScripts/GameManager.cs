@@ -28,9 +28,9 @@ public class GameManager : MonoBehaviour
 
     void FishSpawn()
     {
-        if(fishSpawnCounter <= 0 && fishCount < 10)
+        if(fishSpawnCounter <= 0 && fishCount < 20)
         {
-            Instantiate(fishPrefabs[0], new Vector3(Random.Range(4f, 30f), Random.Range(-8f, -12f), 0), Quaternion.identity, null);
+            Instantiate(fishPrefabs[Random.Range(0,3)], new Vector3(Random.Range(4f, 30f), Random.Range(-8f, -12f), 0), Quaternion.identity, null);
             fishSpawnCounter = 1f;
             fishCount++;
         }

@@ -43,7 +43,7 @@ public class ShopUIManager : MonoBehaviour
     {
         if (moneyText != null && PersistentManager.Instance != null)
         {
-            moneyText.text = "Para: " + PersistentManager.Instance.money + "$";
+            moneyText.text = " " + PersistentManager.Instance.money + "$";
         }
     }
 
@@ -52,6 +52,7 @@ public class ShopUIManager : MonoBehaviour
         if (!TrySpend(damageUpgradeCost)) return;
         if (PersistentManager.Instance != null) PersistentManager.Instance.baseHookDamage += damageUpgradeAmount;
         UpdateUI();
+        Debug.unityLogger.Log("Buying Damage Upgrade");
     }
 
     public void BuyDistanceUpgrade()

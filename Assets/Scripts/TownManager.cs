@@ -20,13 +20,26 @@ public class TownManager : MonoBehaviour
     public GameObject homePrompt;
 
     [Header("Home UI")]
+    public GameObject fadeCanvasObject;
     public CanvasGroup fadeGroup;
     public TextMeshProUGUI dayText;
     public float fadeDuration = 0.6f;
 
     private TownZone _currentZone = TownZone.None;
 
-    // ZoneTrigger scriptleri bu iki metodu çağırır
+    private void Start()
+    {
+        if (fadeCanvasObject != null)
+            fadeCanvasObject.SetActive(false);
+
+        if (fadeGroup != null)
+        {
+            fadeGroup.alpha = 0f;
+            fadeGroup.blocksRaycasts = false;
+            fadeGroup.interactable = false;
+        }
+    }
+
     public void OnZoneEnter(TownZone zone, Collider2D player)
     {
         _currentZone = zone;
@@ -38,7 +51,6 @@ public class TownManager : MonoBehaviour
 
     public void OnZoneExit(TownZone zone)
     {
-        // Sadece çıkılan zone aktifse sıfırla (iki zone üst üste gelirse sorun olmaz)
         if (_currentZone == zone)
         {
             _currentZone = TownZone.None;
@@ -51,7 +63,6 @@ public class TownManager : MonoBehaviour
 
     private void Update()
     {
-        // ESC — açık paneli kapat
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             CloseAllPanels();
@@ -78,6 +89,7 @@ public class TownManager : MonoBehaviour
                 break;
         }
     }
+
     private void CloseAllPanels()
     {
         if (sellPanel != null)        sellPanel.SetActive(false);
@@ -106,9 +118,13 @@ public class TownManager : MonoBehaviour
 
     private IEnumerator EndDayRoutine()
     {
+        if (fadeCanvasObject != null)
+            fadeCanvasObject.SetActive(true);
+
         if (fadeGroup != null)
         {
-            fadeGroup.gameObject.SetActive(true);
+            fadeGroup.blocksRaycasts = true;
+            fadeGroup.interactable = true;
             yield return FadeCanvas(0f, 1f, fadeDuration);
         }
 
